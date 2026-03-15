@@ -1,0 +1,194 @@
+openapi: 3.0.3
+info:
+  title: agent-backend Skills API (/v1)
+  version: 1.0.0
+  description: |
+    Client-facing API for Server A: agent-backend.
+
+    SSOT reference:
+    - HIT-A/agent-backend/docs/plans/2026-03-13-agentic-architecture-design.md
+
+    HARD CONSTRAINTS (clients must follow):
+    - Clients should depend on docs under new_api/agent-backend-api/, not the full SSOT text.
+    - `POST /v1/skills/{name}:invoke` ALWAYS returns HTTP 200.
+      Failures are represented by `{"ok": false, "error": ...}`.
+
+servers:
+  - url: http://agent-backend.internal
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /v1/skills:
+    get:
+      summary: List available skills
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillsListResponse'
+
+  /v1/skills/{name}:invoke:
+    post:
+      summary: Invoke a skill (sync or async)
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvokeRequest'
+      responses:
+        '200':
+          description: Always 200. Success or failure encoded in body.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/InvokeSyncSuccess'
+                  - $ref: '#/components/schemas/InvokeAsyncAccepted'
+                  - $ref: '#/components/schemas/InvokeFailure'
+
+  /v1/jobs/{job_id}:
+    get:
+      summary: Get job status/result
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobGetResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobNotFoundResponse'
+
+components:
+  schemas:
+    Error:
+      type: object
+      required: [code, message, retryable]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        retryable: { type: boolean }
+
+    InvokeRequest:
+      type: object
+      required: [input]
+      properties:
+        input:
+          type: object
+          additionalProperties: true
+        trace:
+          type: object
+          additionalProperties: true
+
+    SkillsListResponse:
+      type: object
+      required: [skills]
+      properties:
+        skills:
+          type: array
+          items:
+            type: object
+            required: [name, is_async]
+            properties:
+              name: { type: string }
+              is_async: { type: boolean }
+              description: { type: string }
+              input_schema:
+                type: object
+                additionalProperties: true
+              output_schema:
+                type: object
+                additionalProperties: true
+
+    InvokeSyncSuccess:
+      type: object
+      required: [ok, output]
+      properties:
+        ok: { type: boolean, enum: [true] }
+        output:
+          type: object
+          additionalProperties: true
+
+    InvokeAsyncAccepted:
+      type: object
+      required: [ok, job_id]
+      properties:
+        ok: { type: boolean, enum: [true] }
+        job_id: { type: string }
+
+    InvokeFailure:
+      type: object
+      required: [ok, error]
+      properties:
+        ok: { type: boolean, enum: [false] }
+        error:
+          $ref: '#/components/schemas/Error'
+
+    Job:
+      type: object
+      required: [id, status, skill_name, created_at, updated_at]
+      properties:
+        id: { type: string }
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed]
+        skill_name: { type: string }
+        input_json:
+          description: any JSON; may be null
+          nullable: true
+        output_json:
+          description: any JSON; only set when succeeded
+          nullable: true
+        error:
+          nullable: true
+          $ref: '#/components/schemas/Error'
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    JobGetResponse:
+      type: object
+      required: [ok, job]
+      properties:
+        ok: { type: boolean, enum: [true] }
+        job:
+          $ref: '#/components/schemas/Job'
+
+    JobNotFoundResponse:
+      type: object
+      required: [ok, error]
+      properties:
+        ok: { type: boolean, enum: [false] }
+        error:
+          $ref: '#/components/schemas/Error'

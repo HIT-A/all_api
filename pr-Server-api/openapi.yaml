@@ -1,0 +1,389 @@
+openapi: 3.0.3
+info:
+  title: pr-server API (internal REST)
+  version: 1.0.0
+  description: |
+    Internal REST API for the Go-based pr-server.
+
+    pr-server applies structured ops to course review TOML, renders README, and opens GitHub PRs.
+
+    IMPORTANT:
+    - This API is **not** client-facing.
+    - The mobile/web app calls **agent-backend** only.
+    - agent-backend adapts this REST API into the SSOT skills protocol (/v1/skills, :invoke, /v1/jobs).
+
+x-internal: true
+
+servers:
+  - url: http://pr-server.internal
+security:
+  - bearerAuth: []
+
+tags:
+  - name: system
+  - name: course
+  - name: pr
+
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkStatusResponse'
+
+  /v1/course:preview:
+    post:
+      tags: [course]
+      summary: Preview TOML/README result without creating PR
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoursePreviewRequest'
+      responses:
+        '200':
+          description: Preview result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoursePreviewResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/course:submit:
+    post:
+      tags: [course]
+      summary: Apply ops and create branch/commit/PR
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseSubmitRequest'
+      responses:
+        '200':
+          description: PR created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseSubmitResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Idempotency conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/pr:lookup:
+    get:
+      tags: [pr]
+      summary: Lookup PR state (optional)
+      parameters:
+        - in: query
+          name: org
+          required: true
+          schema: { type: string }
+        - in: query
+          name: repo
+          required: true
+          schema: { type: string }
+        - in: query
+          name: number
+          required: true
+          schema: { type: integer, format: int32 }
+      responses:
+        '200':
+          description: PR state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrLookupResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    # ---------- Common envelopes ----------
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: TOML_SCHEMA_ERROR
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+    ErrorResponse:
+      type: object
+      required: [ok, error]
+      properties:
+        ok:
+          type: boolean
+          enum: [false]
+        error:
+          $ref: '#/components/schemas/Error'
+
+    OkStatusResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          required: [status]
+          properties:
+            status:
+              type: string
+              example: ok
+
+    # ---------- Target / PR ----------
+    CourseTarget:
+      type: object
+      required: [campus, course_code]
+      properties:
+        campus:
+          type: string
+          description: Campus identifier.
+          enum: [shenzhen, harbin, weihai]
+        course_code:
+          type: string
+          description: Course code, e.g. COMP1011.
+        toml_path:
+          type: string
+          description: Override TOML file path (optional).
+        readme_path:
+          type: string
+          description: Override README file path (optional).
+
+    Author:
+      type: object
+      properties:
+        name: { type: string }
+        link: { type: string }
+        date: { type: string }
+
+    PullRequestInfo:
+      type: object
+      required: [url, number]
+      properties:
+        url: { type: string }
+        number: { type: integer, format: int32 }
+        head_branch: { type: string, nullable: true }
+        base_branch: { type: string, nullable: true }
+
+    BaseRepoInfo:
+      type: object
+      required: [org, repo, ref, toml_path]
+      properties:
+        org: { type: string }
+        repo: { type: string }
+        ref: { type: string }
+        toml_path: { type: string }
+
+    # ---------- Ops ----------
+    AddLecturerReviewOp:
+      type: object
+      required: [op, lecturer_name, content]
+      properties:
+        op:
+          type: string
+          enum: [add_lecturer_review]
+        lecturer_name:
+          type: string
+        content:
+          type: string
+        author:
+          $ref: '#/components/schemas/Author'
+
+    Op:
+      oneOf:
+        - $ref: '#/components/schemas/AddLecturerReviewOp'
+      discriminator:
+        propertyName: op
+
+    # ---------- Preview ----------
+    CoursePreviewRequest:
+      type: object
+      required: [target, ops]
+      properties:
+        target:
+          $ref: '#/components/schemas/CourseTarget'
+        ops:
+          type: array
+          items:
+            $ref: '#/components/schemas/Op'
+
+    PreviewResult:
+      type: object
+      required: [readme_toml, readme_md]
+      properties:
+        readme_toml:
+          type: string
+        readme_md:
+          type: string
+
+    PreviewSummary:
+      type: object
+      required: [changed_files, warnings]
+      properties:
+        changed_files:
+          type: array
+          items: { type: string }
+        warnings:
+          type: array
+          items: { type: string }
+
+    CoursePreviewResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          required: [base, result, summary]
+          properties:
+            base:
+              $ref: '#/components/schemas/BaseRepoInfo'
+            result:
+              $ref: '#/components/schemas/PreviewResult'
+            summary:
+              $ref: '#/components/schemas/PreviewSummary'
+
+    # ---------- Submit ----------
+    PrCreateOptions:
+      type: object
+      properties:
+        title: { type: string }
+        body: { type: string }
+        labels:
+          type: array
+          items: { type: string }
+        draft: { type: boolean }
+
+    CourseSubmitRequest:
+      type: object
+      required: [target, ops, idempotency_key]
+      properties:
+        target:
+          $ref: '#/components/schemas/CourseTarget'
+        ops:
+          type: array
+          items:
+            $ref: '#/components/schemas/Op'
+        pr:
+          $ref: '#/components/schemas/PrCreateOptions'
+        idempotency_key:
+          type: string
+          description: Prevent duplicate PR creation on retries.
+
+    CourseSubmitResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          required: [base, commit, pr]
+          properties:
+            base:
+              type: object
+              required: [org, repo, ref, toml_path]
+              properties:
+                org: { type: string }
+                repo: { type: string }
+                ref: { type: string }
+                toml_path: { type: string }
+            commit:
+              type: object
+              required: [sha]
+              properties:
+                sha: { type: string }
+            pr:
+              $ref: '#/components/schemas/PullRequestInfo'
+
+    # ---------- PR lookup ----------
+    ChecksSummary:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [queued, in_progress, completed]
+        conclusion:
+          type: string
+          nullable: true
+
+    PrLookupResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          required: [state, url, merged, checks]
+          properties:
+            state:
+              type: string
+              enum: [open, closed, merged]
+            url:
+              type: string
+            merged:
+              type: boolean
+            checks:
+              $ref: '#/components/schemas/ChecksSummary'

@@ -1,0 +1,76 @@
+# 仓库名称 (与 repo 名一致)
+course_name = "综合课程系列"
+
+# 仓库类型: normal | multi-project
+repo_type = "multi-project"
+
+# 主课程代码 (父级)
+course_code = "GENERAL"
+
+# 仓库整体简介
+description = """
+这是一个综合课程仓库，包含多门相关课程。
+"""
+
+# ===== 子课程列表 =====
+# 每个子课程是一个独立的课程实体
+
+[[courses]]
+# 子课程代码
+code = "COURSE001"
+# 子课程名称
+name = "课程名称 A"
+# 可选：子课程简介
+description = """
+课程 A 的简要介绍。
+"""
+
+# 课程 A 的章节
+[[courses.sections]]
+title = "考核方式"
+[[courses.sections.items]]
+content = """
+• 平时: 50%
+• 期末: 50%
+"""
+
+# 课程 A 的教师
+[[courses.teachers]]
+name = "教师A"
+
+[[courses.teachers.reviews]]
+content = """
+教师 A 的评价。
+"""
+author = { name = "昵称", link = "https://github.com/xxx", date = "2025-03" }
+
+
+[[courses]]
+# 另一个子课程
+code = "COURSE002"
+name = "课程名称 B"
+
+[[courses.sections]]
+title = "课程简介"
+[[courses.sections.items]]
+content = """
+课程 B 介绍。
+"""
+
+[[courses.teachers]]
+name = "教师B"
+
+[[courses.teachers.reviews]]
+content = "教师 B 评价"
+author = { name = "匿名", date = "2025-01" }
+
+
+# ===== 仓库级别章节 (可选) =====
+# 也可以在仓库级别添加通用章节
+[[sections]]
+title = "使用说明"
+[[sections.items]]
+content = """
+本仓库包含多门课程，每门课程有独立的内容。
+使用 /查 <子课程名> 可以查看特定课程详情。
+"""
