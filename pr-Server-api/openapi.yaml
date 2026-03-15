@@ -127,6 +127,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PrLookupResponse'
+
+  /v1/course:read:
+    post:
+      tags: [course]
+      summary: Read course README (without applying any ops)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseReadRequest'
+      responses:
+        '200':
+          description: Course data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseReadResponse'
+
+  /v1/courses:search:
+    post:
+      tags: [course]
+      summary: Search courses by keyword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoursesSearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoursesSearchResponse'
         '400':
           description: Invalid input
           content:
@@ -387,3 +423,71 @@ components:
               type: boolean
             checks:
               $ref: '#/components/schemas/ChecksSummary'
+
+    # ---------- Course read ----------
+    CourseReadRequest:
+      type: object
+      required: [target]
+      properties:
+        target:
+          $ref: '#/components/schemas/CourseTarget'
+
+    CourseReadData:
+      type: object
+      required: [base, result]
+      properties:
+        base:
+          $ref: '#/components/schemas/BaseRepoInfo'
+        result:
+          $ref: '#/components/schemas/PreviewResult'
+
+    CourseReadResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: '#/components/schemas/CourseReadData'
+
+    # ---------- Courses search ----------
+    CoursesSearchRequest:
+      type: object
+      required: [keyword]
+      properties:
+        keyword:
+          type: string
+          description: Search keyword
+        campus:
+          type: string
+          description: Campus filter (shenzhen/weihai/harbin, empty for all)
+          enum: [shenzhen, weihai, harbin, ""]
+
+    CourseSearchItem:
+      type: object
+      required: [code, name, org, repo]
+      properties:
+        code: { type: string }
+        name: { type: string }
+        org: { type: string }
+        repo: { type: string }
+
+    CoursesSearchData:
+      type: object
+      required: [results]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseSearchItem'
+
+    CoursesSearchResponse:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: '#/components/schemas/CoursesSearchData'
