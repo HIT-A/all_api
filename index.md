@@ -2,7 +2,7 @@
 
 This folder is the **shared API documentation workspace** (human-readable norms + JSON examples + OpenAPI) for:
 
-## Project Architecture (Updated 2025-03-14)
+## Project Architecture (Updated 2025-03-16)
 
 This project targets HIT students across three campuses with a **privacy-first, agentic** architecture:
 - **On-device Orchestrator (HITA)** handles all private skills (login/session, EAS data fetch, local memory/cache).
@@ -16,12 +16,19 @@ Core flow:
 
 ## Recent Updates
 
+### 2025-03-16 - Skills Expansion ✅
+- Added RAG ingestion skills (rag.ingest, rag.ingest_from_github, rag.sync_to_repo)
+- Added file management skills (files.upload, files.download)
+- Added web crawling skills (crawl4ai.page, crawl4ai.site, crawl4ai.status)
+- Added GitHub batch download and document conversion
+- Added aggregation skills (aggregator.search, aggregator.summarize) - Beta
+- **31 skills total now implemented**
+
 ### 2025-03-14 - COS Integration ✅
 - Added Tencent Cloud COS storage support
 - 5 new COS skills for file upload/management
 - Supports large files (PDF, PPT, materials)
 - Integrated with PR workflow
-- **17 skills total now implemented**
 
 ### 2025-03-13 - MCP Support ✅
 - Added Model Context Protocol (MCP) integration
@@ -48,9 +55,9 @@ Core flow:
 ### `agent-backend-api/`
 **Client-facing API for public skills**
 - `README.md` (rules + examples + skill catalog)
-- `v1.md` (readable contract summary with all 17 skills)
+- `v1.md` (readable contract summary with all 31 skills)
 - `openapi.yaml` (machine-readable contract)
-- **Current Status:** 17 skills implemented, COS + MCP newly added
+- **Current Status:** 31 skills implemented, RAG ingestion + Files + Crawl newly added
 
 ### `pr-Server-api/`
 **Internal REST API for GitHub operations**
@@ -76,32 +83,39 @@ Core flow:
 
 ## Skill Catalog
 
-### ✅ Implemented (17 skills)
+### ✅ Implemented (31 skills + 2 Beta)
 
 | Category | Skills | Count |
 |----------|--------|-------|
-| **Data** | rag.query | 1 |
+| **RAG** | rag.query, rag.ingest, rag.ingest_from_github, rag.sync_to_repo | 4 |
+| **Aggregation (Beta)** | aggregator.search, aggregator.summarize | 2 |
 | **PR** | pr.preview, pr.submit, pr.lookup | 3 |
-| **MCP** | mcp.list_servers, mcp.list_tools, mcp.call_tool, mcp.register_server, mcp.unregister_server | 5 |
+| **Data** | data.ingest, data.ingest_batch | 2 |
+| **Search** | search, courses.search, course.read | 3 |
+| **HIT** | hit.teacher, hit.teachers | 2 |
+| **Crawl** | crawl4ai.page, crawl4ai.site, crawl4ai.status | 3 |
+| **GitHub** | github.batch_download, document.convert | 2 |
 | **COS** | cos.save_file, cos.delete_file, cos.list_files, cos.get_presigned_url, cos.get_quota | 5 |
+| **Files** | files.upload, files.download | 2 |
+| **MCP** | mcp.list_servers, mcp.list_tools, mcp.call_tool, mcp.register_server, mcp.unregister_server | 5 |
 | **Test** | echo, sleep_echo | 2 |
-| **Total** | | **17** |
+| **Total** | | **31** |
 
 ### 🔄 Planned
 
 See `FUTURE_ROADMAP.md` for detailed planning:
 
 **Phase 1 (Q1 2025):**
-- rag.ingest - Document ingestion
+- ✅ rag.ingest - Document ingestion (已完成)
 - pr.list - List course PRs
 
 **Phase 2 (Q2 2025):**
-- files.upload - Local file upload
+- ✅ files.upload - Local file upload (已完成)
 - github.read_file - GitHub file access
 
 **Phase 3 (Q3 2025):**
-- aggregator.search - Multi-source search
-- school.search_courses - Public course search
+- ✅ search - Multi-source search (已完成)
+- ✅ courses.search - Public course search (已完成)
 
 **Phase 4 (Q4 2025+):**
 - AI/ML features
@@ -114,10 +128,10 @@ See `FUTURE_ROADMAP.md` for detailed planning:
 ## Quick Links
 
 - [API Roadmap](FUTURE_ROADMAP.md) - Future features and planning
-- [agent-backend Skills](agent-backend-api/v1.md) - All 17 skills with examples
+- [agent-backend Skills](agent-backend-api/v1.md) - All 31 skills with examples
 - [pr-server Internal](pr-Server-api/README.md) - Internal REST API docs
 
 ---
 
 **Maintained by:** HITA Development Team
-**Last Updated:** 2025-03-14
+**Last Updated:** 2025-03-16
