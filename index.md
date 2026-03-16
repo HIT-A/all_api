@@ -21,8 +21,8 @@ Core flow:
 - Added file management skills (files.upload, files.download)
 - Added web crawling skills (crawl4ai.page, crawl4ai.site, crawl4ai.status)
 - Added GitHub batch download and document conversion
-- Added aggregation skills (aggregator.search, aggregator.summarize) - Beta
-- **31 skills total now implemented**
+- Added AI summarization skill (aggregator.summarize)
+- **32 skills total now implemented**
 
 ### 2025-03-14 - COS Integration ✅
 - Added Tencent Cloud COS storage support
@@ -55,7 +55,7 @@ Core flow:
 ### `agent-backend-api/`
 **Client-facing API for public skills**
 - `README.md` (rules + examples + skill catalog)
-- `v1.md` (readable contract summary with all 31 skills)
+- `v1.md` (readable contract summary with all 32 skills)
 - `openapi.yaml` (machine-readable contract)
 - **Current Status:** 31 skills implemented, RAG ingestion + Files + Crawl newly added
 
@@ -83,15 +83,15 @@ Core flow:
 
 ## Skill Catalog
 
-### ✅ Implemented (31 skills + 2 Beta)
+### ✅ Implemented (32 skills)
 
 | Category | Skills | Count |
 |----------|--------|-------|
 | **RAG** | rag.query, rag.ingest, rag.ingest_from_github, rag.sync_to_repo | 4 |
-| **Aggregation (Beta)** | aggregator.search, aggregator.summarize | 2 |
 | **PR** | pr.preview, pr.submit, pr.lookup | 3 |
 | **Data** | data.ingest, data.ingest_batch | 2 |
 | **Search** | search, courses.search, course.read | 3 |
+| **Aggregation** | aggregator.summarize | 1 |
 | **HIT** | hit.teacher, hit.teachers | 2 |
 | **Crawl** | crawl4ai.page, crawl4ai.site, crawl4ai.status | 3 |
 | **GitHub** | github.batch_download, document.convert | 2 |
@@ -99,7 +99,7 @@ Core flow:
 | **Files** | files.upload, files.download | 2 |
 | **MCP** | mcp.list_servers, mcp.list_tools, mcp.call_tool, mcp.register_server, mcp.unregister_server | 5 |
 | **Test** | echo, sleep_echo | 2 |
-| **Total** | | **31** |
+| **Total** | | **32** |
 
 ### 🔄 Planned
 
@@ -128,7 +128,7 @@ See `FUTURE_ROADMAP.md` for detailed planning:
 ## Quick Links
 
 - [API Roadmap](FUTURE_ROADMAP.md) - Future features and planning
-- [agent-backend Skills](agent-backend-api/v1.md) - All 31 skills with examples
+- [agent-backend Skills](agent-backend-api/v1.md) - All 32 skills with examples
 - [pr-server Internal](pr-Server-api/README.md) - Internal REST API docs
 
 ---
