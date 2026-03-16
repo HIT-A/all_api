@@ -281,9 +281,26 @@ components:
         author:
           $ref: '#/components/schemas/Author'
 
+    AddSectionItemOp:
+      type: object
+      required: [op, title, content]
+      properties:
+        op:
+          type: string
+          enum: [add_section_item]
+        title:
+          type: string
+          description: Section title
+        content:
+          type: string
+          description: Section content in Markdown
+        author:
+          $ref: '#/components/schemas/Author'
+
     Op:
       oneOf:
         - $ref: '#/components/schemas/AddLecturerReviewOp'
+        - $ref: '#/components/schemas/AddSectionItemOp'
       discriminator:
         propertyName: op
 
