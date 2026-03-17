@@ -16,6 +16,7 @@ info:
     - `course:read` is README-first. `readme_toml` is now optional and returned only when `include_toml=true`.
     - `courses:search` now matches teacher names and course aliases (not only repository names).
     - `courses:search` uses a bounded fallback scan when direct index/code search has no hits.
+    - Shenzhen supports both normal + multi-project ops; Harbin/Weihai only support normal ops.
 
 x-internal: true
 
@@ -394,8 +395,66 @@ components:
       oneOf:
         - $ref: '#/components/schemas/AddLecturerReviewOp'
         - $ref: '#/components/schemas/AddSectionItemOp'
+        - $ref: '#/components/schemas/AppendCourseReviewOp'
+        - $ref: '#/components/schemas/AddCourseTeacherReviewOp'
+        - $ref: '#/components/schemas/AppendCourseSectionItemOp'
       discriminator:
         propertyName: op
+
+    AppendCourseReviewOp:
+      type: object
+      required: [op, course_name, topic, content]
+      properties:
+        op:
+          type: string
+          enum: [append_course_review]
+        course_name:
+          type: string
+        topic:
+          type: string
+        content:
+          type: string
+        author:
+          $ref: '#/components/schemas/Author'
+
+    AddCourseTeacherReviewOp:
+      type: object
+      required: [op, course_name, teacher_name, content]
+      properties:
+        op:
+          type: string
+          enum: [add_course_teacher_review]
+        course_name:
+          type: string
+        teacher_name:
+          type: string
+        content:
+          type: string
+        author:
+          $ref: '#/components/schemas/Author'
+
+    CourseSectionItem:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        author:
+          $ref: '#/components/schemas/Author'
+
+    AppendCourseSectionItemOp:
+      type: object
+      required: [op, course_name, section_title, item]
+      properties:
+        op:
+          type: string
+          enum: [append_course_section_item]
+        course_name:
+          type: string
+        section_title:
+          type: string
+        item:
+          $ref: '#/components/schemas/CourseSectionItem'
 
     # ---------- Preview ----------
     CoursePreviewRequest:

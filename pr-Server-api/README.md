@@ -30,6 +30,7 @@ Non-goals:
 | `POST /v1/courses:search` | 主要依赖 GitHub repo 名称命中（`in:name`），老师名/别名命中率低 | 同时匹配 `code/name/repo/teachers/aliases`，支持“老师 -> 课程”检索 |
 | `POST /v1/courses:search` 返回字段 | `code/name/org/repo` | 新增 `teachers[]`、`aliases[]`，便于上游直接展示和二次匹配 |
 | `POST /v1/course:read` 返回语义 | 结果中固定包含 `readme_toml + readme_md` | README-first：默认仅返回 `readme_md`；仅当 `include_toml=true` 时返回 `readme_toml` |
+| 多地区操作兼容 | 三地区仅支持 normal 两类操作 | 深圳（HOA）支持 normal + multi-project；哈工大本部/威海仅支持 normal |
 
 ### course:read 新请求参数
 
@@ -65,6 +66,58 @@ Non-goals:
 - 优先路径：仓库名检索 + code search 命中仓库后解析 `readme.toml`。
 - 回退路径：当上述路径无结果时，会进行有限量仓库扫描并本地匹配教师/别名。
 - 性能边界：回退扫描有上限（受服务端配置控制），用于平衡召回率与响应延迟。
+
+## 多格式操作兼容（按校区）
+
+### 深圳（HOA）
+
+- 支持 normal 操作：
+  - `add_lecturer_review`
+  - `add_section_item`
+- 支持 multi-project 操作：
+  - `append_course_review`
+  - `add_course_teacher_review`
+  - `append_course_section_item`
+
+### 哈工大本部 / 威海
+
+- 仅支持 normal 操作：
+  - `add_lecturer_review`
+  - `add_section_item`
+- 如果传入 multi-project 操作，返回 `400 INVALID_OPS`。
+
+### multi-project 操作示例
+
+```json
+{
+  "target": { "campus": "shenzhen", "course_code": "HOA-MULTI" },
+  "ops": [
+    {
+      "op": "append_course_review",
+      "course_name": "AUTO1001",
+      "topic": "课程评价",
+      "content": "整体不错",
+      "author": { "name": "A", "link": "", "date": "2026-03" }
+    },
+    {
+      "op": "add_course_teacher_review",
+      "course_name": "AUTO1001",
+      "teacher_name": "王老师",
+      "content": "讲得很好",
+      "author": { "name": "A", "link": "", "date": "2026-03" }
+    },
+    {
+      "op": "append_course_section_item",
+      "course_name": "AUTO1001",
+      "section_title": "exam",
+      "item": {
+        "content": "考试经验",
+        "author": { "name": "A", "link": "", "date": "2026-03" }
+      }
+    }
+  ]
+}
+```
 
 ## Authentication
 
