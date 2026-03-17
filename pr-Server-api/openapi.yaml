@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: pr-server API (internal REST)
-  version: 1.0.0
+  version: 1.1.0
   description: |
     Internal REST API for the Go-based pr-server.
 
@@ -11,6 +11,10 @@ info:
     - This API is **not** client-facing.
     - The mobile/web app calls **agent-backend** only.
     - agent-backend adapts this REST API into the SSOT skills protocol (/v1/skills, :invoke, /v1/jobs).
+
+    2026-03-18 behavior update:
+    - `course:read` is README-first. `readme_toml` is now optional and returned only when `include_toml=true`.
+    - `courses:search` now matches teacher names and course aliases (not only repository names).
 
 x-internal: true
 
@@ -185,7 +189,7 @@ paths:
   /v1/course:read:
     post:
       tags: [course]
-      summary: Read course README (without applying any ops)
+      summary: Read course README (README-first, optional TOML)
       requestBody:
         required: true
         content:
@@ -233,7 +237,7 @@ paths:
   /v1/courses:search:
     post:
       tags: [course]
-      summary: Search courses by keyword
+      summary: Search courses by keyword (code/name/repo/teacher/alias)
       requestBody:
         required: true
         content:
@@ -537,6 +541,20 @@ components:
       properties:
         target:
           $ref: '#/components/schemas/CourseTarget'
+        include_toml:
+          type: boolean
+          default: false
+          description: Whether to include `result.readme_toml` in response.
+
+    CourseReadResult:
+      type: object
+      required: [readme_md]
+      properties:
+        readme_md:
+          type: string
+        readme_toml:
+          type: string
+          description: Returned only when `include_toml=true`.
 
     CourseReadData:
       type: object
@@ -545,7 +563,7 @@ components:
         base:
           $ref: '#/components/schemas/BaseRepoInfo'
         result:
-          $ref: '#/components/schemas/PreviewResult'
+          $ref: '#/components/schemas/CourseReadResult'
 
     CourseReadResponse:
       type: object
@@ -578,6 +596,12 @@ components:
         name: { type: string }
         org: { type: string }
         repo: { type: string }
+        teachers:
+          type: array
+          items: { type: string }
+        aliases:
+          type: array
+          items: { type: string }
 
     CoursesSearchData:
       type: object

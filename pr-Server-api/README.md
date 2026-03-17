@@ -23,6 +23,43 @@ Non-goals:
 - **agent-backend is the skills gateway** (SSOT `/v1/skills`, `:invoke`, `/v1/jobs`).
 - agent-backend will **adapt/forward** to pr-server and normalize outputs to the skills protocol.
 
+## 2026-03-18 完整修复（先后差异）
+
+| 能力 | 修复前 | 修复后 |
+|---|---|---|
+| `POST /v1/courses:search` | 主要依赖 GitHub repo 名称命中（`in:name`），老师名/别名命中率低 | 同时匹配 `code/name/repo/teachers/aliases`，支持“老师 -> 课程”检索 |
+| `POST /v1/courses:search` 返回字段 | `code/name/org/repo` | 新增 `teachers[]`、`aliases[]`，便于上游直接展示和二次匹配 |
+| `POST /v1/course:read` 返回语义 | 结果中固定包含 `readme_toml + readme_md` | README-first：默认仅返回 `readme_md`；仅当 `include_toml=true` 时返回 `readme_toml` |
+
+### course:read 新请求参数
+
+```json
+{
+  "target": { "campus": "weihai", "course_code": "MATH1001" },
+  "include_toml": false
+}
+```
+
+### courses:search 新返回字段示例
+
+```json
+{
+  "ok": true,
+  "data": {
+    "results": [
+      {
+        "code": "CS101",
+        "name": "计算机导论",
+        "org": "HITSZ-OpenAuto",
+        "repo": "CS101",
+        "teachers": ["张三", "李四"],
+        "aliases": ["计算机基础", "COMP101"]
+      }
+    ]
+  }
+}
+```
+
 ## Authentication
 
 All endpoints require:
