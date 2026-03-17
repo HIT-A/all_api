@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: agent-backend Skills API (/v1)
-  version: 1.0.0
+  version: 1.1.0
   description: |
     Client-facing API for Server A: agent-backend.
 
@@ -12,6 +12,14 @@ info:
     - Clients should depend on docs under new_api/agent-backend-api/, not the full SSOT text.
     - `POST /v1/skills/{name}:invoke` ALWAYS returns HTTP 200.
       Failures are represented by `{"ok": false, "error": ...}`.
+
+    Runtime updates (2026-03-17):
+    - PR skills (`pr.preview`, `pr.submit`, `pr.lookup`) forward `PR_SERVER_TOKEN` as Bearer to pr-server.
+    - `pr.submit` supports `idempotency_key`; if omitted, agent-backend auto-generates one.
+    - `pr.lookup` accepts both `number` (preferred) and `pr` (legacy) in invoke input.
+    - `rag.sync_to_repo` accepts both `repo`/`branch` aliases and `target_repo`/`target_branch`.
+    - `rag.sync_to_repo` git flow uses `GITHUB_TOKEN` auth (optional `GITHUB_USERNAME`) and non-interactive mode.
+    - Dynamic MCP registration is disabled on production-facing skill surface.
 
 servers:
   - url: http://agent-backend.internal
@@ -58,6 +66,32 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/InvokeRequest'
+            examples:
+              pr_submit:
+                summary: Submit PR with idempotency key
+                value:
+                  input:
+                    campus: harbin
+                    course_code: CS101
+                    ops:
+                      - op: add_section_item
+                        title: API Update Note
+                        content: Synced from agent-backend openapi contract.
+                    idempotency_key: submit-cs101-20260317
+              pr_lookup_preferred:
+                summary: Lookup PR using preferred number field
+                value:
+                  input:
+                    org: HIT-A
+                    repo: DATA_HB
+                    number: 8
+              rag_sync_alias:
+                summary: RAG sync using alias fields
+                value:
+                  input:
+                    repo: HIT-A/HITA_RagData
+                    branch: main
+                    daily: false
       responses:
         '200':
           description: Always 200. Success or failure encoded in body.
@@ -111,6 +145,13 @@ components:
         trace:
           type: object
           additionalProperties: true
+      description: |
+        Generic invoke envelope.
+
+        Skill-specific notes:
+        - pr.submit input supports `idempotency_key` (recommended for idempotent retries).
+        - pr.lookup input supports `number` (preferred) and `pr` (legacy compatibility).
+        - rag.sync_to_repo input supports alias keys: `repo`=`target_repo`, `branch`=`target_branch`.
 
     SkillsListResponse:
       type: object

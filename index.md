@@ -2,7 +2,7 @@
 
 This folder is the **shared API documentation workspace** (human-readable norms + JSON examples + OpenAPI) for:
 
-## Project Architecture (Updated 2025-03-16)
+## Project Architecture (Updated 2026-03-17)
 
 This project targets HIT students across three campuses with a **privacy-first, agentic** architecture:
 - **On-device Orchestrator (HITA)** handles all private skills (login/session, EAS data fetch, local memory/cache).
@@ -15,6 +15,18 @@ Core flow:
 3. Server executes async jobs with traceable, redacted observability.
 
 ## Recent Updates
+
+### 2026-03-17 - PR + RAG Runtime Alignment ✅
+- Updated `agent-backend-api/openapi.yaml` to `1.1.0`
+- PR runtime aligned with latest pr-server behavior:
+  - Bearer forwarding via `PR_SERVER_TOKEN`
+  - `pr.submit` supports `idempotency_key` (auto-generated if omitted)
+  - `pr.lookup` accepts `number` (preferred) and `pr` (legacy)
+- `rag.sync_to_repo` runtime hardened:
+  - Supports `repo/branch` aliases (`target_repo/target_branch` compatible)
+  - Uses `GITHUB_TOKEN` auth for git clone/pull/push
+  - Disables interactive git prompts and auto-configures commit identity
+- Skill inventory updated to **33** (dynamic MCP register/unregister removed)
 
 ### 2025-03-16 - Skills Expansion ✅
 - Added RAG ingestion skills (rag.ingest, rag.ingest_from_github, rag.sync_to_repo)
@@ -55,9 +67,9 @@ Core flow:
 ### `agent-backend-api/`
 **Client-facing API for public skills**
 - `README.md` (rules + examples + skill catalog)
-- `v1.md` (readable contract summary with all 32 skills)
-- `openapi.yaml` (machine-readable contract)
-- **Current Status:** 31 skills implemented, RAG ingestion + Files + Crawl newly added
+- `v1.md` (readable contract summary with all 33 skills)
+- `openapi.yaml` (machine-readable contract, current: 1.1.0)
+- **Current Status:** 33 skills implemented; PR/RAG runtime behavior synced with production
 
 ### `pr-Server-api/`
 **Internal REST API for GitHub operations**
@@ -83,11 +95,11 @@ Core flow:
 
 ## Skill Catalog
 
-### ✅ Implemented (32 skills)
+### ✅ Implemented (33 skills)
 
 | Category | Skills | Count |
 |----------|--------|-------|
-| **RAG** | rag.query, rag.ingest, rag.ingest_from_github, rag.sync_to_repo | 4 |
+| **RAG** | rag.query, rag.ingest, rag.ingest_from_github, rag.intake_manual_folder, rag.sync_to_repo | 5 |
 | **PR** | pr.preview, pr.submit, pr.lookup | 3 |
 | **Data** | data.ingest, data.ingest_batch | 2 |
 | **Search** | search, courses.search, course.read | 3 |
@@ -97,9 +109,9 @@ Core flow:
 | **GitHub** | github.batch_download, document.convert | 2 |
 | **COS** | cos.save_file, cos.delete_file, cos.list_files, cos.get_presigned_url, cos.get_quota | 5 |
 | **Files** | files.upload, files.download | 2 |
-| **MCP** | mcp.list_servers, mcp.list_tools, mcp.call_tool, mcp.register_server, mcp.unregister_server | 5 |
+| **MCP** | mcp.list_servers, mcp.list_tools, mcp.call_tool | 3 |
 | **Test** | echo, sleep_echo | 2 |
-| **Total** | | **32** |
+| **Total** | | **33** |
 
 ### 🔄 Planned
 
@@ -128,10 +140,10 @@ See `FUTURE_ROADMAP.md` for detailed planning:
 ## Quick Links
 
 - [API Roadmap](FUTURE_ROADMAP.md) - Future features and planning
-- [agent-backend Skills](agent-backend-api/v1.md) - All 32 skills with examples
+- [agent-backend Skills](agent-backend-api/v1.md) - All 33 skills with examples
 - [pr-server Internal](pr-Server-api/README.md) - Internal REST API docs
 
 ---
 
 **Maintained by:** HITA Development Team
-**Last Updated:** 2025-03-16
+**Last Updated:** 2026-03-17

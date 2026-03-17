@@ -9,7 +9,7 @@
 - **Crawling:** crawl4ai.page, crawl4ai.site (async), crawl4ai.status (NEW)
 - **Aggregation:** aggregator.search, aggregator.summarize (async)
 - **PR:** pr.preview (async), pr.submit (async), pr.lookup (sync)
-- **MCP:** mcp.list_servers, mcp.list_tools, mcp.call_tool (async), mcp.register_server, mcp.unregister_server
+- **MCP:** mcp.list_servers, mcp.list_tools, mcp.call_tool (async)
 - **Test:** echo, sleep_echo (async)
 
 ---

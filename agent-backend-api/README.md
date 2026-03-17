@@ -28,7 +28,7 @@ This bundle should:
 - `/v1/skills/{name}:invoke` - Invoke any skill (ALWAYS HTTP 200)
 - `/v1/jobs/{id}` - Get async job status
 
-### Public Skills (25 total)
+### Public Skills (33 total)
 
 #### Data Layer
 - ✅ `rag.query` - RAG vector search (Qdrant)
@@ -65,12 +65,26 @@ This bundle should:
 - ✅ `pr.submit` (async) - Submit PR via pr-server with async execution
 - ✅ `pr.lookup` - Query PR status (fast lookup, remains sync)
 
+PR runtime updates (2026-03-17):
+- `pr.preview` / `pr.submit` / `pr.lookup` now forward `PR_SERVER_TOKEN` as Bearer to pr-server.
+- `pr.submit` supports `idempotency_key`; if omitted, agent-backend auto-generates one.
+- `pr.submit` response mapping is aligned with pr-server `data.pr` schema.
+- `pr.lookup` accepts both `number` (preferred) and `pr` (legacy) fields.
+
+#### RAG Sync runtime updates
+- ✅ `rag.sync_to_repo` supports both `repo`/`branch` aliases and `target_repo`/`target_branch`.
+- Git clone/pull/push for sync uses `GITHUB_TOKEN` auth (optional `GITHUB_USERNAME`, default `x-access-token`).
+- Sync disables interactive git prompts (`GIT_TERMINAL_PROMPT=0`) for reliable background jobs.
+- Sync auto-configures commit identity via `GIT_AUTHOR_NAME` / `GIT_AUTHOR_EMAIL` (with defaults).
+
 #### MCP Management
 - ✅ `mcp.list_servers` - List registered MCP servers
-- ✅ `mcp.register_server` - Register new MCP server
-- ✅ `mcp.unregister_server` - Unregister MCP server
 - ✅ `mcp.list_tools` - List available MCP tools
 - ✅ `mcp.call_tool` - Execute MCP tool
+
+MCP policy update (2026-03-17):
+- Dynamic MCP registration is disabled in production-facing skill surface.
+- `mcp.register_server` and `mcp.unregister_server` are removed from `/v1/skills`.
 
 #### Aggregation & Search (NEW)
 - ✅ `aggregator.search` - Multi-source concurrent search (RAG + GitHub + COS)
