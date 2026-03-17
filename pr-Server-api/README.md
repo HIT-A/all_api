@@ -60,6 +60,12 @@ Non-goals:
 }
 ```
 
+### courses:search 行为补充（实现细节）
+
+- 优先路径：仓库名检索 + code search 命中仓库后解析 `readme.toml`。
+- 回退路径：当上述路径无结果时，会进行有限量仓库扫描并本地匹配教师/别名。
+- 性能边界：回退扫描有上限（受服务端配置控制），用于平衡召回率与响应延迟。
+
 ## Authentication
 
 All endpoints require:
