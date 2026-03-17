@@ -189,6 +189,11 @@ Response (example):
 
 This endpoint performs the write workflow and opens a GitHub PR.
 
+409 conflict covers two server-side cases:
+
+- `REQUEST_IN_PROGRESS`: same `campus + course_code + idempotency_key` is still running.
+- `BRANCH_EXISTS`: generated head branch already exists.
+
 Request:
 
 ```json
@@ -258,6 +263,13 @@ All errors use:
   }
 }
 ```
+
+Common error codes currently returned by pr-server:
+
+- `INVALID_JSON`, `MISSING_TARGET`, `MISSING_KEYWORD`, `MISSING_PARAMS`, `INVALID_NUMBER`
+- `MISSING_IDEMPOTENCY_KEY`, `REQUEST_IN_PROGRESS`, `BRANCH_EXISTS`
+- `REPO_NOT_FOUND`, `TOML_NOT_FOUND`, `PR_NOT_FOUND`
+- `TOML_SCHEMA_ERROR`, `RENDER_FAILED`, `CONFIG_ERROR`, `GITHUB_ERROR`, `INVALID_OPS`
 
 Suggested error codes:
 
