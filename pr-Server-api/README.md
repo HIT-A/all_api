@@ -40,11 +40,11 @@ All endpoints require:
 
 ### Target (course locator)
 
-Requests locate a course by `campus + course_code`.
+Requests locate a course by `campus + course_code` (and optional `course_name`).
 
 ```json
 {
-  "target": { "campus": "shenzhen", "course_code": "COMP1011" }
+  "target": { "campus": "shenzhen", "course_code": "COMP1011", "course_name": "Intro" }
 }
 ```
 
@@ -62,6 +62,11 @@ When querying course data, pr-server first tries the primary `org`. If the repos
 
 - **Preview**: Reads from cache_org if not found in primary org
 - **Submit**: Always writes to primary org (not cache_org)
+
+#### Missing target bootstrap
+
+- **Shenzhen**: missing target falls back to `hoa-cache`, path pattern `<course_code>-<course_name>/readme.toml`; if still missing, pr-server bootstraps a minimal normal TOML in-memory for preview/submit.
+- **Weihai / Harbin**: mono repos `DATA_WH` / `DATA_HB` themselves act as cache; when `courses/<code>/readme.toml` is missing, pr-server bootstraps minimal normal TOML in-memory on the resolved path.
 
 ### Ops (structured edits)
 

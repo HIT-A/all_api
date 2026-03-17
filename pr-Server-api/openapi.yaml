@@ -234,12 +234,9 @@ components:
         course_code:
           type: string
           description: Course code, e.g. COMP1011.
-        toml_path:
+        course_name:
           type: string
-          description: Override TOML file path (optional).
-        readme_path:
-          type: string
-          description: Override README file path (optional).
+          description: Optional course name used for bootstrap path naming when target is missing.
 
     Author:
       type: object
@@ -262,6 +259,7 @@ components:
       required: [org, repo, ref, toml_path]
       properties:
         org: { type: string }
+        cache_org: { type: string }
         repo: { type: string }
         ref: { type: string }
         toml_path: { type: string }
