@@ -75,7 +75,6 @@ Non-goals:
   - `add_lecturer_review`
   - `add_section_item`
 - 支持 multi-project 操作：
-  - `append_course_review`
   - `add_course_teacher_review`
   - `append_course_section_item`
 
@@ -92,13 +91,6 @@ Non-goals:
 {
   "target": { "campus": "shenzhen", "course_code": "HOA-MULTI" },
   "ops": [
-    {
-      "op": "append_course_review",
-      "course_name": "AUTO1001",
-      "topic": "课程评价",
-      "content": "整体不错",
-      "author": { "name": "A", "link": "", "date": "2026-03" }
-    },
     {
       "op": "add_course_teacher_review",
       "course_name": "AUTO1001",

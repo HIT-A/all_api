@@ -395,27 +395,10 @@ components:
       oneOf:
         - $ref: '#/components/schemas/AddLecturerReviewOp'
         - $ref: '#/components/schemas/AddSectionItemOp'
-        - $ref: '#/components/schemas/AppendCourseReviewOp'
         - $ref: '#/components/schemas/AddCourseTeacherReviewOp'
         - $ref: '#/components/schemas/AppendCourseSectionItemOp'
       discriminator:
         propertyName: op
-
-    AppendCourseReviewOp:
-      type: object
-      required: [op, course_name, topic, content]
-      properties:
-        op:
-          type: string
-          enum: [append_course_review]
-        course_name:
-          type: string
-        topic:
-          type: string
-        content:
-          type: string
-        author:
-          $ref: '#/components/schemas/Author'
 
     AddCourseTeacherReviewOp:
       type: object
