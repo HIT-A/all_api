@@ -3,6 +3,14 @@
 ## 适用场景
 预览课程改动。深圳支持 multi-project ops。
 
+## 操作路由规则（2026-03-18）
+- 不再生成或转发 `append_course_review`。
+- 用户表达“对子课程评价”时，统一改发 `append_course_section_item`。
+- `section_title` 默认建议使用 `课程评价`（若上游显式给出则按显式值）。
+- 用户表达“评价某位老师”时，发 `add_course_teacher_review`。
+- `harbin` / `weihai` 的 multi-project 操作会被拦截并返回 `INVALID_OPS`。
+- normal 操作保持不变（`add_lecturer_review`、`add_section_item`）。
+
 ## 请求定义
 - Method: POST
 - Path: /v1/skills/pr.preview:invoke
