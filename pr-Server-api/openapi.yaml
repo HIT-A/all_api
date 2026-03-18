@@ -17,6 +17,9 @@ info:
     - `courses:search` now matches teacher names and course aliases (not only repository names).
     - `courses:search` uses a bounded fallback scan when direct index/code search has no hits.
     - Shenzhen supports both normal + multi-project ops; Harbin/Weihai only support normal ops.
+    - `append_course_review` has been removed. Multi-project writes must use:
+      - `add_course_teacher_review` -> `courses.teachers.reviews`
+      - `append_course_section_item` -> `courses.sections.items`
 
 x-internal: true
 
@@ -403,6 +406,7 @@ components:
     AddCourseTeacherReviewOp:
       type: object
       required: [op, course_name, teacher_name, content]
+      description: Add a teacher review under courses.teachers.reviews (multi-project only; shenzhen only).
       properties:
         op:
           type: string
@@ -428,6 +432,7 @@ components:
     AppendCourseSectionItemOp:
       type: object
       required: [op, course_name, section_title, item]
+      description: Append an item under courses.sections.items (multi-project only; shenzhen only).
       properties:
         op:
           type: string

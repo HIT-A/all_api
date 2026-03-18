@@ -155,10 +155,10 @@ PR 多格式示例（深圳 HOA）：
     "course_code": "HOA-MULTI",
     "ops": [
       {
-        "op": "append_course_review",
+        "op": "add_course_teacher_review",
         "course_name": "高等数学",
-        "topic": "作业",
-        "content": "测试multi-project"
+        "teacher_name": "张老师",
+        "content": "讲解清晰，节奏合适"
       }
     ]
   }
@@ -188,6 +188,7 @@ PR 多格式示例（深圳 HOA）：
 
 注意：
 - 在 `harbin` 或 `weihai` 传入上述 multi-project 操作会返回 `INVALID_OPS`。
+- `append_course_review` 已移除，不应再生成该 op。
 
 兜底规则：
 - 不确定参数时，先调用 GET /v1/skills 查看 input_schema，再发包。

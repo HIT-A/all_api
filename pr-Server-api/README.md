@@ -69,6 +69,27 @@ Non-goals:
 
 ## 多格式操作兼容（按校区）
 
+### 2026-03-18 纠错说明（重要）
+
+- 之前错误：服务端曾短暂支持 `append_course_review`，会把内容写入 `courses.reviews`。
+- 错误原因：该路径不符合当前 multi-project 仓库结构约定。当前约定中，子课程评价应写入：
+  - `courses.teachers.reviews`（教师评价）
+  - `courses.sections.items`（课程/考试/作业等条目）
+- 修复结果：`append_course_review` 已从服务端移除；继续传入会返回 `400 INVALID_OPS`（unknown op type）。
+
+### 给 agent-backend 的改造要点
+
+- 不再生成或转发 `append_course_review`。
+- 需要“对子课程写通用评价”时，请转成 `append_course_section_item`：
+  - `course_name`: 子课程名（如“体育基础”）
+  - `section_title`: 建议固定为“课程评价”或由上游策略统一
+  - `item.content`: 评价正文
+  - `item.author`: 可选
+- 需要“对老师评价”时，使用 `add_course_teacher_review`。
+- 校区兼容保持不变：
+  - 深圳：允许 `add_course_teacher_review`、`append_course_section_item`
+  - 哈工大本部/威海：multi op 一律拒绝（`INVALID_OPS`）
+
 ### 深圳（HOA）
 
 - 支持 normal 操作：
@@ -108,6 +129,33 @@ Non-goals:
       }
     }
   ]
+}
+```
+
+### 禁止操作示例（现在会报错）
+
+```json
+{
+  "target": { "campus": "shenzhen", "course_code": "HOA-MULTI" },
+  "ops": [
+    {
+      "op": "append_course_review",
+      "course_name": "体育基础",
+      "content": "这门课整体体验不错"
+    }
+  ]
+}
+```
+
+预期错误（示例）：
+
+```json
+{
+  "ok": false,
+  "error": {
+    "code": "INVALID_OPS",
+    "message": "failed to unmarshal ops: unknown op type: append_course_review"
+  }
 }
 ```
 
