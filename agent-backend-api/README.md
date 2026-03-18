@@ -19,6 +19,7 @@ This bundle should:
 ## Files
 - `v1.md`: readable contract summary + JSON examples
 - `openapi.yaml`: machine-readable contract
+- `agent-guides/INDEX.md`: Agent/ReAct 专用多文件调用手册索引（每个接口单独文档）
 
 ## What's implemented today ✅
 
