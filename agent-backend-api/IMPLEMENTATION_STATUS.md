@@ -1,144 +1,108 @@
 # agent-backend 实现状态报告
 
-**更新时间:** 2026-03-21
+**更新时间:** 2026-03-22
 
 ---
 
-## 一、接口实现状态总览
+## 一、架构概览
 
-经过全面审查，确认大部分功能已真实实现。以下是最终状态：
+### 统一数据 Pipeline（2026-03-22 重大重构）
 
-| Skill | 实际实现 | 状态 |
-|-------|---------|------|
-| 所有 33 个 Skill | 真实调用外部服务 | ✅ 正常 |
+所有数据入口统一走：**SHA256 dedup → COS 原始存储 → Qdrant 向量**
 
-### 关键调用链确认
-
-- **COS**: Skill → Storage → **Client (SDK)** ✅
-- **Search 数据源**: unifiedSearchGitHub ✅ / Arxiv ✅ / Annas ✅
-- **RAG**: GitHub → Parse → Embed → Qdrant ✅
-
----
-
-## 二、真实实现的组件
-
-### 2.1 COS Client (client.go)
-
-**已接入腾讯云 COS SDK v0.7.73**
-
-| 方法 | 实现 |
-|-----|------|
-| `Upload` | `c.client.Object.Put(ctx, key, reader, opts)` |
-| `Delete` | `c.client.Object.Delete(ctx, key, nil)` |
-| `GetPresignedURL` | `c.client.Object.GetPresignedURL(...)` |
-| `ListFiles` | `c.client.Bucket.Get(ctx, opt)` + 分页 |
-
-### 2.2 统一搜索数据源 (aggregator_search.go)
-
-| 函数 | 实现 |
-|-----|------|
-| `unifiedSearchGitHub` | 调用 `fetcher.SearchCode()` → GitHub Search API |
-| `unifiedSearchArxiv` | 调用 `callMCPTool("arxiv", "search_arxiv", ...)` |
-| `unifiedSearchAnnas` | 调用 MCP `article_search` / `book_search` 工具 |
-
-### 2.3 MCP 服务器
-
-所有内置 MCP 服务器都完整实现：
-- **arxiv**: 调用 `https://export.arxiv.org/api/query`
-- **brave**: 调用 Brave Search API + DuckDuckGo fallback
-- **crawl4ai**: 使用 `AsyncWebCrawler` 真实爬取
-- **unstructured**: 使用 `PyMuPDF`/`python-docx` 等库
-
----
-
-## 三、Stub / 未实现功能
-
-### 3.1 summarizeWithLLM (aggregator_search.go:809-825)
-
-**状态**: 🔴 Stub
-
-```go
-func summarizeWithLLM(ctx context.Context, query string, results []SearchResult) (string, []string) {
-    // TODO: Call LLM for summarization
-    // For now, return placeholder
-    return "总结功能待实现", []string{"需要接入 LLM"}
-}
+```
+data.ingest / files.upload / crawl4ai.page / annas-archive / github.batch_download / rag.sync_to_repo
+    │
+    ▼
+SQLite dedup_records 表（SHA256 去重）
+    │
+    ├─→ [已存在] 跳过
+    │
+    ▼ [新内容]
+COS 原始文件存储
+    │
+    ▼
+直接 RAG ingest → Qdrant
+    │
+    ▼
+可查询
 ```
 
-**注意**: `aggregator.summarize` skill 本身调用 BigModel API 是真实实现的，这个 `summarizeWithLLM` 是内部 helper 函数，`search` skill 的 summary 功能会受影响。
-
-### 3.2 processCrawlSource (rag_sync_skill.go:575-587)
-
-**状态**: 🔴 Stub
-
-```go
-func processCrawlSource(ctx context.Context, source RAGSource, repoPath string, ...) (int, int, error) {
-    totalFiles := 0
-    totalChunks := 0
-    if source.URL == "" {
-        return 0, 0, nil
-    }
-    return totalFiles, totalChunks, nil  // 永远返回 0！
-}
-```
-
-**说明**: 爬虫来源处理未实现。如果 `rag.sync_to_repo` 使用 `source_type: crawl`，则该数据源不会被处理。
+**废弃：**
+- `rag.intake_manual_folder` — 已删除注册
+- GitHub Raw 队列（`incoming/*_raw/`）— 不再写入
 
 ---
 
-## 四、并发安全问题
+## 二、Skill 列表（30 个）
 
-### 4.1 usedToday 互斥锁 (storage.go)
-
-| 位置 | 状态 | 说明 |
-|-----|------|------|
-| `SaveFile` | ✅ 已有锁 | `s.mu.Lock()` 保护 |
-| `GetQuota` | ✅ 已有锁 | `s.mu.RLock()` 保护 |
-| `ResetDailyQuota` | ✅ 已有锁 | `s.mu.Lock()` 保护 |
-
-### 4.2 rag_ingest.go processedChunks
-
-**位置**: 第 363 行
-
-```go
-var processedChunks int64  // 全局变量
-```
-
-**问题**: `atomic.LoadInt64(&processedChunks)` 但没有 `atomic.AddInt64`，存在不一致。
-
-**影响**: 仅影响统计准确性，不影响功能。
+| 分类 | Skills | 状态 |
+|------|--------|------|
+| **Test** | echo, sleep_echo | ✅ 正常 |
+| **RAG** | rag.query, rag.ingest, rag.ingest_from_github, rag.sync_to_repo | ✅ 全部重构 |
+| **PR** | pr.preview, pr.submit, pr.lookup | ✅ 正常 |
+| **Course** | course.read, courses.search | ✅ 正常 |
+| **HIT** | hit.teacher, hit.teachers | ✅ 正常 |
+| **COS** | cos.save_file, cos.delete_file, cos.list_files, cos.get_presigned_url | ✅ 正常 |
+| **Files** | files.upload, files.download | ✅ 已重构 |
+| **Search** | search, aggregator.summarize | ✅ 正常 |
+| **Data** | data.ingest, data.ingest_batch | ✅ 已重构 |
+| **Crawl** | crawl4ai.page, crawl4ai.site, crawl4ai.status | ✅ page 已重构 |
+| **GitHub** | github.batch_download, document.convert | ✅ 已重构 |
+| **MCP** | mcp.list_servers, mcp.list_tools, mcp.call_tool | ✅ 正常 |
 
 ---
 
-## 五、依赖外部服务的 Skill
+## 三、新增文件
 
-| Skill | 外部服务 | 状态 |
-|-------|---------|------|
-| `rag.*` | Qdrant + Embedder (BigModel) | ✅ 正常 |
-| `pr.*`, `courses.*` | pr-server | ✅ 正常 |
-| `crawl4ai.*` | crawl4ai MCP | ✅ 正常 |
-| `search` | RAG + Brave + GitHub + Arxiv + Annas | ✅ 正常 |
-| `hit.teacher(s)` | 哈工大网站 + crawl4ai | ✅ 正常 |
-| `document.convert` | unstructured MCP | ⚠️ 需注册 |
-| `aggregator.summarize` | BigModel API | ✅ 正常 |
+| 文件 | 说明 |
+|------|------|
+| `internal/skills/dedup_store.go` | SQLite SHA256 去重存储 |
+| `internal/skills/rag_ingest_direct.go` | 直接将 markdown ingest 到 Qdrant |
 
 ---
 
-## 六、最终 Stub 列表
+## 四、环境变量
 
-| 函数 | 文件:行号 | 问题 |
-|-----|----------|------|
-| `summarizeWithLLM` | aggregator_search.go:809 | 返回占位符，未调用 LLM |
-| `processCrawlSource` | rag_sync_skill.go:575 | 返回 0,0,nil，爬虫来源未处理 |
+| 变量 | 值 | 说明 |
+|------|-----|------|
+| `COS_SECRET_ID` | `***` | 腾讯云 COS |
+| `COS_SECRET_KEY` | `***` | 腾讯云 COS |
+| `COS_BUCKET` | `hita-001-1410950200` | 腾讯云 COS |
+| `COS_REGION` | `ap-guangzhou` | 腾讯云 COS |
+| `GITHUB_TOKEN` | `***` | GitHub |
+| `MINIMAX_API_KEY` | `***` | MiniMax LLM（优先） |
+| `MINIMAX_MODEL` | `MiniMax-M2.7` | MiniMax 模型 |
+| `BIGMODEL_API_KEY` | `***` | BigModel（回退/嵌入） |
+| `QDRANT_URL` | `http://127.0.0.1:6333` | Qdrant 向量库 |
+| `QDRANT_COLLECTION` | `hit_courses_2048` | Qdrant collection |
+| `ANNAS_SECRET_KEY` | `***` | Anna's Archive |
 
 ---
 
-## 七、修复建议
+## 五、已解决问题
 
-### 低优先级
+| 问题 | 修复方式 |
+|------|---------|
+| COS SDK 接入 | 腾讯云 COS SDK v0.7.73 |
+| `usedToday` 并发安全 | RWMutex |
+| COS 错误静默忽略 | 添加警告日志 |
+| DownloadBytes 无限制 | io.LimitReader 100MB |
+| 弱拼音转换 | mozillazg/go-pinyin 真实转换 |
+| GitHub Raw 队列冗余 | 移除，改用 dedup + COS |
+| COS 冗余存储转换后文件 | 删除 markdown 上传 COS |
+| GitHub Converted 命名丢失原始信息 | 改用相对路径 |
+| `cos.get_quota` 无用 | 已删除 |
+| `summarizeWithLLM` stub | 接入 MiniMax API |
+| `processCrawlSource` stub | 接入 crawl4ai.page |
+| `processedChunks` 非原子 | 影响小，低优先级 |
 
-| 任务 | 文件 | 说明 |
-|-----|------|------|
-| 实现 `summarizeWithLLM` | aggregator_search.go:809 | 接入 LLM 进行总结 |
-| 实现 `processCrawlSource` | rag_sync_skill.go:575 | 处理爬虫来源数据 |
-| 修复 `processedChunks` | rag_ingest.go:363 | 使用 atomic 操作 |
+---
+
+## 六、Go 版本
+
+当前环境：Go 1.24.11  
+go.mod 要求：Go 1.24.11  
+依赖 x/net 降级至 v0.34.0（兼容 1.24.11）
+
+如需使用 Go 1.25.0，恢复 go.mod 中 `go 1.25.0` 和 `golang.org/x/net v0.52.0`。
